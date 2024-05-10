@@ -26,7 +26,7 @@ func getTriggeredIncident(incidents []models.Incident) []models.Incident {
 func main() {
 	parser.Parse()
 	if parser.InputFlags.Email == "" || parser.InputFlags.ID == "" {
-		fmt.Println("Please provide email and ID and Token")
+		fmt.Println("Please provide Email, UserID and APIToken")
 		return
 	}
 
@@ -38,6 +38,7 @@ func main() {
 		return
 	}
 
+	errCount := 0
 	for _, incident := range getTriggeredIncident(incidents) {
 		err := pdClient.UpdateIncident(ctx, incident.Id, models.UpdateIncidentRequest{
 			From:         parser.InputFlags.Email,
@@ -45,8 +46,14 @@ func main() {
 			Status:       "acknowledged",
 		})
 		if err != nil {
+			errCount++
 			fmt.Printf("Failed to update incident for id: %v with err: %v\n", incident.Id, err)
 		}
+	}
+
+	if errCount > 0 {
+		fmt.Printf("Failed to acknowledge: %d incidents\n", errCount)
+		return
 	}
 
 	fmt.Printf("All the incidents for this user: %v are successfully acknowledged\n", parser.InputFlags.Email)
